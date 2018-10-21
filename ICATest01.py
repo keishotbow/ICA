@@ -7,9 +7,9 @@ import glob
 import cv2
 
 # 画像を保存しているフォルダのパス
-image_path = 'C:/Users/Owner/Pictures/'
-image_path = 'C:/Users/Owner/Dropbox/Data/Pictures/'
-image_path = 'C:/Users/Owner/Dropbox/Data/Test_Pictures/'
+image_path = 'C:/Users/Owner/Pictures/ICA/'
+# image_path = 'C:/Users/Owner/Dropbox/Data/Pictures/'
+# image_path = 'C:/Users/Owner/Dropbox/Data/Test_Pictures/'
 
 # 画像サイズの規定
 FRAME_SIZE = (512, 512)
@@ -25,20 +25,23 @@ for i in range(len(src_paths)):
     src_images.append(cv2.imread(src_paths[i], 0))
 
 src_images = np.asarray(src_images)
+# cv2.imshow("aaab", src_images[1])
+# temp = np.where(src_images[1] > 255-50, 255-50, src_images[1])
+#
+# temp += 50
+# src_images[1] = temp
 
-cv2.imshow("aaab", src_images[1])
-
-temp = np.where(src_images[1] > 255-50, 255-50, src_images[1])
-
-temp += 50
-# temp = [x if x <= 255 else 255 for x in src_images[1]]
-src_images[1] = temp
+# 画像のヒストグラムを計算する
+for i in range(len(src_images)):
+    hist = cv2.calcHist(src_images[i], [0], None, [256], [0,256])
+    plot.plot(hist)
+plot.show()
 
 
-hist = cv2.calcHist(src_images[0], [0], None, [256], [0,256])
-hist2 = cv2.calcHist(src_images[1], [0], None, [256], [0,256])
-plot.plot(hist)
-plot.plot(hist2)
+# hist = cv2.calcHist(src_images[0], [0], None, [256], [0,256])
+# hist2 = cv2.calcHist(src_images[1], [0], None, [256], [0,256])
+# plot.plot(hist)
+# plot.plot(hist2)
 # plot.show()
 # cv2.waitKey(0)
 # cv2.imshow("aaa", src_images[1])
@@ -58,6 +61,7 @@ for i in range(len(src_images)):
     else:
         print(i + 1, "枚目 -> 画像サイズ", FRAME_SIZE)
 
+print()
 # exit(0)
 # tmp = [src_lenna_image, src_fruits_image]
 # if tmp[0].shape != tmp[1].shape:
@@ -91,13 +95,12 @@ assert flat_images.shape == (len(src_images), src_images.shape[1] * src_images.s
 # 2つのベクトルを結合(9, 262144)
 S = np.c_[flat_images.T]
 # S = np.c_[gray_lenna_flat, gray_fruits_flat]  # ソース信号
-print(S.shape)
 
 # １次元化した画像は元の次元に戻しても同じか確認する
 WINDOW_TITLE = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 for i in range(len(S[1])):
-    print(i)
-    print(S[::1, i:i + 1].T)
+    # print(i)
+    # print(S[::1, i:i + 1].T)
     S_tmp = np.reshape(S[::1, i:i + 1].T, FRAME_SIZE)
     cv2.imshow(WINDOW_TITLE[i], S_tmp)
     assert np.allclose(S_tmp, src_images[i])
@@ -120,8 +123,8 @@ S = S.astype(np.float64)
 # S += noise  # ノイズを加える
 S /= S.std(axis=0)  # データの正規化
 
-A = np.array([[1.2, 0.4], [0.8, 1.5]])  # 混合行列
-A = np.array([[1.0, 0.0], [0.0, 1.0]])  # 混合行列
+# A = np.array([[1.2, 0.4], [0.8, 1.5]])  # 混合行列
+# A = np.array([[1.0, 0.0], [0.0, 1.0]])  # 混合行列
 A = np.eye(len(src_images))
 
 A = (2 - 0.2) * np.random.rand(len(src_images), len(src_images)) + 0.2
@@ -129,12 +132,12 @@ np.set_printoptions(precision=1)
 print("A:", A)
 
 X = np.dot(S, A.T)
-print(X)
+# print(X)
 
 # cv2.imwrite(image_path + 'mix_image.png', X)
 
 # 混合行列に対して独立成分分析を適用する
-decomposer = FastICA(n_components=2)
+decomposer = FastICA(n_components=len(src_images))
 decomposer.fit(X)
 S_ = decomposer.transform(X)  # 信号の再構成
 A_ = decomposer.mixing_  # 混合行列の推定
@@ -219,39 +222,6 @@ for ii, (model, name) in enumerate(zip(models, names), 1):
 
 plot.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.46)
 plot.show()
-
-# cv2.imshow('dst', X)
-# cv2.imshow('mix_image', X)
-
-# # スパースコーディング
-# decomposer = DictionaryLearning()
-# decomposer.fit(mix_array.T)
-# Usc = decomposer.components_.T
-# Asc = decomposer.transform(mix_array.T).T
-
-# axis('equal')
-# plot(mix_array[0], mix_array[1], 'xc')
-# # Upca = Upca / sqrt((Upca ** 2).sum(axis=0))
-# Uica = Uica / sqrt((Uica ** 2).sum(axis=0))
-# # Usc = Usc / sqrt((Usc ** 2).sum(axis=0))
-# for i in range(2):
-#     # p_pca = plot([0, Upca[0, i]], [0, Upca[1, i]], '-r')
-#     p_ica = plot([0, Uica[0, i]], [0, Uica[1, i]], '-b')
-#     # p_sc = plot([0, Usc[0, i]], [0, Usc[1, i]], '-g')
-# legend(('data', 'PCA', 'ICA', 'SC'))
-# legend(loc="best", prop=dict(size=12))
-# show()
-#
-# subplot(1, 3, 1)
-# # plot(Apca[0], Apca[1], 'xc')
-# title('PCA')
-# subplot(1, 3, 2)
-# plot(Aica[0], Aica[1], 'xc')
-# title('ICA')
-# subplot(1, 3, 3)
-# # plot(Asc[0], Asc[1], 'xc')
-# title('SC')
-# show()
 
 # 画像の描画
 # cv2.imshow('lenna', src_lenna_image)
